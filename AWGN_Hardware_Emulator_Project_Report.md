@@ -21,26 +21,7 @@ This project presents a fully scalable, resource-optimized Additive White Gaussi
 
 ## 2. System Architecture
 
-```
-+-----------------------------------------------------------------------------------+
-|                                 AWGN Core Subsystem                               |
-|                                                                                   |
-|  +------------------+     u0, u1     +--------------------+     Raw Noise (f) |
-|  | Taus258 PRNG     | -------------> | Box-Muller Engine  | ---------------->+ |
-|  | (5x 64-bit LFSRs)|                | (Log LUT + Sqrt)   |                  | |
-|  +------------------+                +--------------------+                  | |
-|                                                                              v |
-|  +------------------+   P_signal     +--------------------+     K_noise     +---+
-|  | Real-Time Power  | -------------> | Gain Scaling Logic | --------------> | X |
-|  | Estimator (EMA)  |                | (Eq. K_noise)      |                 +---+
-|  +------------------+                +--------------------+                   |
-|                                                                               v
-|  Input I/Q Sample ---------------------------------------------------------> (+) Saturation Adder
-|  (AXI4-Stream)                                                                |
-|                                                                               v
-|                                                                         Output (Signal + Noise)
-+-----------------------------------------------------------------------------------+
-```
+![Figure 1: System Architecture](docs/images/awgn/DesignBlock_AWGN_Adder-001-001.jpg)
 
 ### 2.1 Taus258 Combined LFSR Generator
 To eliminate statistical correlations common in single LFSRs, the PRNG implements the Taus258 algorithm running five independent 64-bit LFSR components in parallel:
@@ -73,6 +54,8 @@ Where amplitude $f = \sqrt{-2 \ln(u_0)}$ and phase $\theta = 2\pi u_1$.
 * **Phase ($\\theta$):** Uses a Quarter-Wave Sine/Cosine LUT mapping $[0, 65535] \rightarrow [0, 2\pi]$.
 * **Pipeline Synchronization:** Aligns the 20-cycle amplitude calculation delay with the 3-cycle phase path via shift registers before final multiplication to Q6.12 (18-bit fixed-point).
 
+![Figure 2: Box-Muller Transformation](docs/images/awgn/DesignBlock_BoxMuller-001-001.jpg)
+
 ### 2.3 Real-Time Power Estimation & Scaling
 To maintain a target $E_s/N_0$ dynamically, input power $P_{\text{inst}}[n] = I[n]^2 + Q[n]^2$ is computed using dedicated 19x18 DSP blocks and filtered via an Exponential Moving Average (EMA) pipeline:
 
@@ -83,6 +66,9 @@ The gain scaling factor $K_{\text{noise}}$ is derived as:
 $$K_{\text{noise}} = \sqrt{P_{\text{signal}}} \cdot \frac{1}{\sqrt{2}} \cdot \frac{1}{\sqrt{10^{\text{SNR}_{\text{dB}}/10}}}$$
 
 $$\text{SNR}_{\text{dB}} = \left(\frac{E_s}{N_0}\right)_{\text{dB}} - 10 \log_{10}\left(\frac{F_s}{B}\right)$$
+
+![Figure 3: Real-Time Power Estimation](docs/images/awgn/DesignBlock_PowerEst-001-001.jpg)
+
 
 ---
 
@@ -99,6 +85,8 @@ $$\text{SNR}_{\text{dB}} = \left(\frac{E_s}{N_0}\right)_{\text{dB}} - 10 \log_{1
 | `0x244` | `[31:0]` | R/W | **PRNG Seed High 0** | 32 MSBs of Taus258 seed for Channel 0 |
 | `0xE40` | `[5:0]` | R/W | **Hist. Indexing** | Bin index (0–63) for hardware PDF histogram readback |
 | `0xE40` | `[11:8]` | R/W | **Hist. Scale Mode** | Scale selector ($/1$ to $/512$) for Gaussian bell-curve viewing |
+
+![Figure 3: APB registers](docs/images/awgn/DesignBlock_AWGN_Top-001-001.jpg)
 
 ---
 
@@ -126,20 +114,11 @@ Validated SystemVerilog RTL (16-bit Q2.14 fixed-point) against a double-precisio
 ### 5.2 Multi-Channel SNR Sweep Accuracy
 Evaluated over 8 independent channels with AXI4-Stream `tkeep`/`tlast` signaling across an $E_s/N_0$ range of $-9 \text{ dB}$ to $+38 \text{ dB}$:
 
-```text
-     SNR Estimation Accuracy (-9 dB to +38 dB Sweep)
-    +-------------------------------------------------+
-0.20|                                       *         |  High-SNR Limit:
-    |                                      * *        |  Q2.14 Quantization
-0.15|                                     *   *       |  Floor Impact
-    |                                                 |
-0.10|  *                                              |
-    |   *                                             |
-0.05|    *                                            |
-    |     * * * * * * * * * * * * * * * *             |  Optimal Region:
-0.00+-------------------------------------------------+  Error < 0.05 dB
-     -9  -5   0   5   10  15  20  25  30  35  38 (dB)
-```
+![Figure 5: Waveform Overlay of first 1000 samples](docs/images/awgn/Result_Sim_WaveOverlay-001-001.jpg)
+
+![Figure 6: Gaussian Distribution](docs/images/awgn/Result_Sim_Dist-001-001.jpg)
+
+![Figure 7: Absolute Error Distribution](docs/images/awgn/Result_Sim_Err-001-001.jpg)
 
 * **Optimal Range ($0 \text{ dB}$ to $25 \text{ dB}$):** Injection error is strictly bounded within **$\\pm 0.02 \\text{ dB}$**.
 * **Extremes ($> 30 \text{ dB}$):** Slight deviation ($< 0.18 \text{ dB}$) due to Q2.14 LSB truncation limits at very small noise power levels.
