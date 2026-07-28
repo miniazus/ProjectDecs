@@ -22,6 +22,7 @@ This project presents a fully scalable, resource-optimized Additive White Gaussi
 ## 2. System Architecture
 
 ![Figure 1: System Architecture](docs/images/awgn/DesignBlock_AWGN_Adder-001-001.jpg)
+Figure 1: System Architecture
 
 ### 2.1 Taus258 Combined LFSR Generator
 To eliminate statistical correlations common in single LFSRs, the PRNG implements the Taus258 algorithm running five independent 64-bit LFSR components in parallel:
