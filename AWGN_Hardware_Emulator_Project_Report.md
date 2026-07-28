@@ -22,7 +22,7 @@ This project presents a fully scalable, resource-optimized Additive White Gaussi
 ## 2. System Architecture
 
 ![Figure 1: System Architecture](docs/images/awgn/DesignBlock_AWGN_Adder-001-001.jpg)
-Figure 1: System Architecture
+*Figure 1: System Architecture*
 
 ### 2.1 Taus258 Combined LFSR Generator
 To eliminate statistical correlations common in single LFSRs, the PRNG implements the Taus258 algorithm running five independent 64-bit LFSR components in parallel:
@@ -56,6 +56,7 @@ Where amplitude $f = \sqrt{-2 \ln(u_0)}$ and phase $\theta = 2\pi u_1$.
 * **Pipeline Synchronization:** Aligns the 20-cycle amplitude calculation delay with the 3-cycle phase path via shift registers before final multiplication to Q6.12 (18-bit fixed-point).
 
 ![Figure 2: Box-Muller Transformation](docs/images/awgn/DesignBlock_BoxMuller-001-001.jpg)
+*Figure 2: Box-Muller Transformation*
 
 ### 2.3 Real-Time Power Estimation & Scaling
 To maintain a target $E_s/N_0$ dynamically, input power $P_{\text{inst}}[n] = I[n]^2 + Q[n]^2$ is computed using dedicated 19x18 DSP blocks and filtered via an Exponential Moving Average (EMA) pipeline:
@@ -69,7 +70,7 @@ $$K_{\text{noise}} = \sqrt{P_{\text{signal}}} \cdot \frac{1}{\sqrt{2}} \cdot \fr
 $$\text{SNR}_{\text{dB}} = \left(\frac{E_s}{N_0}\right)_{\text{dB}} - 10 \log_{10}\left(\frac{F_s}{B}\right)$$
 
 ![Figure 3: Real-Time Power Estimation](docs/images/awgn/DesignBlock_PowerEst-001-001.jpg)
-
+*Figure 3: Real-Time Power Estimation*
 
 ---
 
@@ -87,7 +88,8 @@ $$\text{SNR}_{\text{dB}} = \left(\frac{E_s}{N_0}\right)_{\text{dB}} - 10 \log_{1
 | `0xE40` | `[5:0]` | R/W | **Hist. Indexing** | Bin index (0–63) for hardware PDF histogram readback |
 | `0xE40` | `[11:8]` | R/W | **Hist. Scale Mode** | Scale selector ($/1$ to $/512$) for Gaussian bell-curve viewing |
 
-![Figure 3: APB registers](docs/images/awgn/DesignBlock_AWGN_Top-001-001.jpg)
+![Figure 4: APB registers](docs/images/awgn/DesignBlock_AWGN_Top-001-001.jpg)
+*Figure 4: APB registers*
 
 ---
 
@@ -116,10 +118,13 @@ Validated SystemVerilog RTL (16-bit Q2.14 fixed-point) against a double-precisio
 Evaluated over 8 independent channels with AXI4-Stream `tkeep`/`tlast` signaling across an $E_s/N_0$ range of $-9 \text{ dB}$ to $+38 \text{ dB}$:
 
 ![Figure 5: Waveform Overlay of first 1000 samples](docs/images/awgn/Result_Sim_WaveOverlay-001-001.jpg)
+*Figure 5: Waveform Overlay of first 1000 samples*
 
 ![Figure 6: Gaussian Distribution](docs/images/awgn/Result_Sim_Dist-001-001.jpg)
+*Figure 6: Gaussian Distribution*
 
 ![Figure 7: Absolute Error Distribution](docs/images/awgn/Result_Sim_Err-001-001.jpg)
+*Figure 7: Absolute Error Distribution*
 
 * **Optimal Range ($0 \text{ dB}$ to $25 \text{ dB}$):** Injection error is strictly bounded within **$\\pm 0.02 \\text{ dB}$**.
 * **Extremes ($> 30 \text{ dB}$):** Slight deviation ($< 0.18 \text{ dB}$) due to Q2.14 LSB truncation limits at very small noise power levels.
