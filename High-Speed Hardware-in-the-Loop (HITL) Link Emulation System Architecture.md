@@ -30,16 +30,14 @@ The experimental HITL system consists of eight key hardware entities spanning co
 
 The complete system topology is modeled as a formal end-to-end data processing chain, illustrated conceptually in Figure 1 and implemented in physical laboratory hardware as shown in Figure 2:
 
-$$S = ( \text{PC1}_{\text{src}} \rightarrow \text{Ethernet} \rightarrow \mathcal{F}_{\text{Agilex}} \rightarrow \text{HSMC} \rightarrow \mathcal{L}_{\text{coax}} \rightarrow \text{SFP+/QSFP28} \rightarrow \mathcal{F}_{\text{Kintex}} \rightarrow \text{PCIe} \rightarrow \text{PC2}_{\text{snk}} )$$
-
 ![Figure 1: Conceptual system block diagram](docs/images/hitl/figure1.png)  
 *Figure 1: Conceptual system block diagram illustrating end-to-end data pipelines, physical interconnects, and external SerDes clock distribution.*
 
 * **Ingress Stage ($\text{PC1} \rightarrow \text{DE25}$):** Test payloads are framed and transmitted across a Gigabit Ethernet network interface. The onboard Ethernet MAC on the Intel Agilex 5 converts byte-oriented network streams into internal wide-bus words.
-* **Transmitter Processing ($\mathcal{F}_{\text{Agilex}}$):** Incoming packets are parallelized into an ultra-wide $W = 1024\text{-bit}$ internal datapath. The pipeline performs single-cycle header parsing, field insertion/modification, and network coding (NC) linear combination encoding.
-* **SerDes Physical Layer ($\mathcal{L}_{\text{coax}}$):** Wide parallel words are serialized by the Agilex 5 transceivers. SerDes phase locking across vendors is maintained via the common TI LMK62E2 reference clock ($f_{\text{ref}} = 156.25\text{ MHz}$) over RG405 SMA coaxial lines. High-speed differential data lanes (SS405, 2x TX, 2x RX) transport multi-gigabit serial data into the Trenz TE0422-03 module.
+* **Transmitter Processing:** Incoming packets are parallelized into an ultra-wide $W = 1024\text{-bit}$ internal datapath. The pipeline performs single-cycle header parsing, field insertion/modification, and network coding (NC) linear combination encoding.
+* **SerDes Physical Layer:** Wide parallel words are serialized by the Agilex 5 transceivers. SerDes phase locking across vendors is maintained via the common TI LMK62E2 reference clock ($f_{\text{ref}} = 156.25\text{ MHz}$) over RG405 SMA coaxial lines. High-speed differential data lanes (SS405, 2x TX, 2x RX) transport multi-gigabit serial data into the Trenz TE0422-03 module.
 * **Form-Factor Conversion:** The Trenz TE0422-03 module outputs an SFP+ optical/electrical format, which is passively adapted to a QSFP28 form factor via the 10GTek WADQS-28-MEL converter before entering the AMD/Xilinx Kintex UltraScale+ transceiver RX pins.
-* **Egress Stage ($\mathcal{F}_{\text{Kintex}} \rightarrow \text{PC2}$):** The Kintex UltraScale+ FPGA performs deserialization, packet validation, and Network Coding decoding. High-throughput scatter-gather DMA engines transfer completed frames across a PCIe 3.0 x4 interface into PC2 host memory.
+* **Egress Stage ($\text{Kintex} \rightarrow \text{PC2}$):** The Kintex UltraScale+ FPGA performs deserialization, packet validation, and Network Coding decoding. High-throughput scatter-gather DMA engines transfer completed frames across a PCIe 3.0 x4 interface into PC2 host memory.
 
 ![Figure 2: Physical laboratory hardware setup](docs/images/hitl/figure2.png)  
 *Figure 2: Physical laboratory hardware-in-the-loop (HITL) setup demonstrating inter-board coaxial differential cabling, clock distribution, and form-factor plug-in adapters.*
